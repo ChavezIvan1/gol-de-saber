@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gol de Saber — Trivia del Mundial</title>
+<style>
+  :root{
+    --amarillo: #FCD116;
+    --azul: #003893;
+    --azul-dark: #00224F;
+    --rojo: #CE1126;
+    --verde-cancha: #1B7A3D;
+    --verde-cancha-dark: #115228;
+    --crema: #FAF6EC;
+    --tinta: #161616;
+    --gris-suave: #6B6B6B;
+    --linea: #E2DCC6;
+    --sombra: rgba(0,0,0,0.16);
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(252,209,22,0.14), transparent 38%),
+      radial-gradient(circle at 88% 88%, rgba(0,56,147,0.16), transparent 38%),
+      var(--crema);
+    color: var(--tinta);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 24px 16px 56px;
+  }
+
+  .header-stripe{
+    width:100%; max-width:880px; height:8px; border-radius:999px;
+    background: linear-gradient(90deg, var(--amarillo) 0 33%, var(--azul) 33% 66%, var(--rojo) 66% 100%);
+    margin-bottom: 20px;
+  }
+
+  .title-block{ text-align:center; margin-bottom: 22px; }
+  .title-block h1{
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: clamp(30px, 5.2vw, 48px); font-weight: 900; margin:0;
+    letter-spacing: -0.01em; line-height:1; color: var(--azul-dark); text-transform: uppercase;
+  }
+  .title-block h1 .accent{ color: var(--rojo); }
+  .title-block p{ margin: 10px 0 0; color: var(--gris-suave); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+  .badge-row{ display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+  .badge{ font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; padding: 5px 12px; border-radius: 4px; background: var(--azul-dark); color: white; }
+
+  .card{ width:100%; max-width: 880px; background: white; border-radius: 18px; box-shadow: 0 16px 36px var(--sombra); padding: 28px; position:relative; }
+
+  /* ---------- SETUP ---------- */
+  #setup label.section-label{ display:block; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing: 0.06em; color: var(--azul-dark); margin-bottom:10px; }
+
+  .count-buttons{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 22px; }
+  .count-btn{ padding: 10px 18px; border-radius: 8px; border: 2px solid var(--linea); background: var(--crema); font-weight:800; font-size:14px; cursor:pointer; color: var(--tinta); font-family:inherit; }
+  .count-btn:hover{ border-color: var(--azul); }
+  .count-btn.active{ background: var(--azul-dark); border-color: var(--azul-dark); color:white; }
+
+  .player-setup-rows{ display:flex; flex-direction:column; gap:16px; margin-bottom: 22px; }
+  .player-setup-card{ border: 2px solid var(--linea); border-radius: 12px; padding: 14px; background: var(--crema); }
+  .player-setup-top{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .player-num-badge{ width:24px; height:24px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:white; flex-shrink:0; }
+  .player-setup-card input[type="text"]{
+    flex:1; padding: 11px 13px; border-radius: 8px; border: 2px solid var(--linea);
+    font-size:15px; font-weight:600; font-family:inherit; outline:none;
+  }
+  .player-setup-card input[type="text"]:focus{ border-color: var(--azul); }
+  .player-setup-card input.input-error{ border-color: var(--rojo); }
+
+  .team-select-label{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color: var(--gris-suave); margin: 0 0 8px; }
+
+  .flag-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap:8px; }
+  .flag-option{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding: 8px 4px; border-radius: 8px; border: 2px solid var(--linea); background:white;
+    cursor:pointer; font-family:inherit;
+  }
+  .flag-option .flag-emoji{ font-size: 22px; line-height:1; }
+  .flag-option .flag-name{ font-size: 9px; font-weight:700; text-align:center; line-height:1.1; color: var(--gris-suave); }
+  .flag-option.selected{ border-color: var(--azul-dark); background:#EAF0FB; }
+  .flag-option.selected .flag-name{ color: var(--azul-dark); }
+  .flag-option:hover{ border-color: var(--azul); }
+
+  .setup-error{ color: var(--rojo); font-size:13px; font-weight:700; margin: -6px 0 16px; display:none; }
+  .setup-error.show{ display:block; }
+
+  .bank-status{ font-size:13px; color: var(--gris-suave); font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:6px; }
+
+  .primary-btn{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding: 16px; border-radius:10px; border:none;
+    background: var(--rojo); color:white;
+    font-size:16px; font-weight:900; letter-spacing:0.02em; text-transform:uppercase;
+    cursor:pointer; font-family:inherit;
+    box-shadow: 0 8px 18px rgba(206,17,38,0.3);
+  }
+  .primary-btn:hover{ background:#A60D1E; }
+
+  .secondary-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding: 13px 22px; border-radius:8px; border: 2px solid var(--azul-dark);
+    background: white; color: var(--azul-dark);
+    font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:0.02em;
+    cursor:pointer; font-family:inherit;
+  }
+  .secondary-btn:hover{ background: var(--azul-dark); color:white; }
+
+  /* ---------- GAME ---------- */
+  #game{ display:none; flex-direction:column; gap:16px; }
+
+  .field-wrap{ background: linear-gradient(180deg, var(--verde-cancha), var(--verde-cancha-dark)); border-radius:14px; padding: 16px 12px; position:relative; }
+  #field-svg{ width:100%; height:auto; display:block; }
+
+  .top-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .meta-info{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color: var(--gris-suave); }
+  .meta-info .hl{ color: var(--azul-dark); }
+
+  .timer-wrap{ display:flex; align-items:center; gap:8px; }
+  .timer-track{ width:130px; height:8px; background:#EFEAD8; border-radius:999px; overflow:hidden; }
+  .timer-fill{ height:100%; background: #1B7A3D; border-radius:999px; transition: width 1s linear, background-color 0.3s; }
+  .timer-num{ font-size:14px; font-weight:900; color: var(--azul-dark); width:22px; text-align:right; font-variant-numeric: tabular-nums; }
+  .timer-num.steal-mode{ color: var(--rojo); }
+
+  .double-window-note{ font-size:11px; font-weight:800; color: var(--rojo); text-transform:uppercase; letter-spacing:0.03em; display:flex; align-items:center; gap:5px; }
+  .double-window-note.faded{ color: var(--gris-suave); }
+
+  .progress-track{ width:100%; height:6px; background:#EFEAD8; border-radius:999px; overflow:hidden; }
+  .progress-fill{ height:100%; background: var(--azul-dark); border-radius:999px; transition: width 0.4s ease; }
+
+  .question-card{ background: var(--crema); border: 2px solid var(--linea); border-radius:14px; padding: 22px; transition: background-color 0.3s, border-color 0.3s; }
+  .question-card.steal-active{ background:#FDEAEA; border-color: var(--rojo); }
+
+  .turn-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+  .turn-pill{ display:inline-flex; align-items:center; gap:8px; padding: 6px 14px; border-radius:6px; background: var(--azul-dark); color:white; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; }
+  .turn-pill.steal{ background: var(--rojo); }
+  .streak-pill{ display:none; align-items:center; gap:6px; padding: 6px 12px; border-radius:6px; background: var(--amarillo); color: var(--azul-dark); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; }
+  .streak-pill.show{ display:inline-flex; }
+
+  .question-text{ font-size: clamp(17px, 2.3vw, 21px); font-weight:800; margin: 0 0 16px; line-height:1.35; color: var(--tinta); }
+
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .option-btn{ text-align:left; padding: 14px 16px; border-radius:10px; border: 2px solid var(--linea); background:white; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; color: var(--tinta); display:flex; align-items:center; gap:10px; }
+  .option-btn:hover:not(:disabled){ border-color: var(--azul); }
+  .option-btn:disabled{ cursor:default; }
+  .option-letter{ width:26px; height:26px; border-radius:5px; background:#EFEAD8; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0; color: var(--gris-suave); }
+  .option-btn.correct{ background: #E7F6EC; border-color: #1B7A3D; color:#155C2D; }
+  .option-btn.correct .option-letter{ background:#1B7A3D; color:white; }
+  .option-btn.incorrect{ background: #FCEAEA; border-color: var(--rojo); color:#8C0E1C; }
+  .option-btn.incorrect .option-letter{ background:var(--rojo); color:white; }
+
+  .feedback-box{ margin-top:14px; font-size:14px; font-weight:700; min-height:20px; display:flex; align-items:center; gap:6px; }
+  .feedback-box.success{ color:#155C2D; }
+  .feedback-box.error{ color:#8C0E1C; }
+  .feedback-box.timeout{ color:#8C0E1C; }
+
+  .next-btn{ margin-top:16px; display:none; }
+
+  .scoreboard{ display:grid; gap:8px; }
+  .score-row{ display:flex; align-items:center; justify-content:space-between; padding: 11px 16px; border-radius:10px; background: var(--crema); border: 2px solid transparent; }
+  .score-row.active{ border-color: var(--azul-dark); background: #EAF0FB; }
+  .score-row.steal-target{ border-color: var(--rojo); background:#FDEAEA; }
+  .score-left{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:14px; }
+  .score-pts{ font-weight:800; font-size:14px; color: var(--gris-suave); }
+  .flag-chip{ font-size:16px; line-height:1; }
+
+  /* ---------- GOAL OVERLAY ---------- */
+  .full-overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50; flex-direction:column; gap:14px; text-align:center; padding:20px; }
+  .full-overlay.show{ display:flex; }
+  .goal-overlay{ background: rgba(0,34,79,0.94); }
+  .steal-overlay{ background: rgba(120,8,18,0.95); }
+  .overlay-icon{ width:80px; height:80px; }
+  .overlay-text{ font-size: clamp(38px, 9vw, 70px); font-weight:900; letter-spacing: -0.01em; text-transform:uppercase; transform: scale(0.5); animation: popIn 0.5s cubic-bezier(.17,.89,.32,1.49) forwards; }
+  .goal-overlay .overlay-text{ color: var(--amarillo); }
+  .steal-overlay .overlay-text{ color: white; }
+  @keyframes popIn{ to{ transform: scale(1); } }
+  .overlay-sub{ color:white; font-size:16px; font-weight:700; }
+
+  .penalty-banner{ background: var(--azul-dark); color:white; border-radius:10px; padding: 14px 18px; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; display:flex; align-items:center; gap:10px; }
+
+  /* ---------- FINAL / PODIUM ---------- */
+  #final{ display:none; flex-direction:column; align-items:center; text-align:center; gap:6px; padding: 6px 0 4px; width:100%; }
+  .final-eyebrow{ font-size:12px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; color: var(--gris-suave); margin:0; }
+  #winner-text{ font-size: clamp(22px, 4vw, 30px); font-weight:900; color: var(--azul-dark); margin:0 0 18px; text-transform:uppercase; }
+
+  .podium-stage{
+    width:100%; max-width:560px; display:flex; align-items:flex-end; justify-content:center; gap:14px;
+    background: linear-gradient(180deg, #EAF0FB, transparent);
+    border-radius: 16px 16px 0 0;
+    padding: 28px 16px 0;
+  }
+  .podium-col{ display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; max-width:140px; }
+  .podium-medal{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom:-19px; z-index:2; border:3px solid white; }
+  .podium-flag{ font-size:30px; }
+  .podium-name{ font-size:13px; font-weight:800; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .podium-pts{ font-size:12px; font-weight:700; color: var(--gris-suave); }
+  .podium-block{ width:100%; border-radius: 10px 10px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:14px; font-size:26px; font-weight:900; color:white; box-shadow: 0 -4px 14px rgba(0,0,0,0.08) inset; }
+  .podium-1{ order:2; } .podium-2{ order:1; } .podium-3{ order:3; }
+  .podium-1 .podium-medal{ background: linear-gradient(145deg, #FFE680, var(--amarillo)); color:#7A5B00; }
+  .podium-2 .podium-medal{ background: linear-gradient(145deg, #E3E7EA, #B7BCC2); color:#3D4146; }
+  .podium-3 .podium-medal{ background: linear-gradient(145deg, #E7C6A0, #C99355); color:#5A3A14; }
+  .podium-1 .podium-block{ height:130px; background: linear-gradient(180deg, var(--amarillo), #E0B400); color:var(--azul-dark); }
+  .podium-2 .podium-block{ height:96px; background: linear-gradient(180deg, #D5DADF, #ABB1B8); }
+  .podium-3 .podium-block{ height:68px; background: linear-gradient(180deg, #DDB98A, #B2854E); }
+
+  .rest-ranking{ width:100%; max-width:420px; display:grid; gap:8px; margin-top:18px; }
+  .rank-badge{ width:24px;height:24px;border-radius:4px; display:flex;align-items:center;justify-content:center; font-size:12px;font-weight:800;color:white;flex-shrink:0; background:#C7C2AD; }
+
+  footer{ margin-top: 26px; font-size:12px; color: var(--gris-suave); text-align:center; font-weight:600; }
+  .icon{ display:inline-flex; vertical-align:middle; flex-shrink:0; }
+
+  @media (prefers-reduced-motion: reduce){ .overlay-text{ animation: none; transform: scale(1); } *{ transition: none !important; } }
+
+  @media (max-width:600px){
+    body{ padding: 16px 10px 40px; }
+    .card{ padding:16px; border-radius:14px; }
+    .badge{ font-size:10px; padding:4px 9px; }
+    .flag-grid{ grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap:6px; }
+    .flag-option{ padding:6px 2px; }
+    .flag-option .flag-emoji{ font-size:20px; }
+    .flag-option .flag-name{ font-size:8px; }
+    .top-row{ gap:8px; }
+    .timer-wrap{ gap:6px; }
+    .timer-track{ width:90px; }
+    .question-card{ padding:16px; }
+    .question-text{ font-size:16px; }
+    .option-btn{ padding:12px 12px; font-size:14px; }
+    .turn-row{ gap:6px; }
+    .turn-pill, .streak-pill{ font-size:11px; padding:5px 10px; }
+    .podium-stage{ gap:8px; padding: 20px 8px 0; }
+    .podium-col{ max-width: 33%; }
+    .podium-medal{ width:30px; height:30px; font-size:13px; }
+    .podium-flag{ font-size:24px; }
+    .podium-name{ font-size:11px; max-width:90px; }
+    .podium-1 .podium-block{ height:100px; font-size:20px; }
+    .podium-2 .podium-block{ height:74px; font-size:18px; }
+    .podium-3 .podium-block{ height:52px; font-size:16px; }
+    .player-setup-card{ padding:12px; }
+    .double-window-note{ font-size:10px; }
+    .primary-btn, .secondary-btn{ font-size:14px; padding:14px; }
+  }
+
+  @media (max-width:380px){
+    .title-block h1{ font-size:26px; }
+    .flag-grid{ grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); }
+    .option-letter{ width:22px; height:22px; font-size:11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header-stripe"></div>
+
+<div class="title-block">
+  <h1>Gol de <span class="accent">Saber</span></h1>
+  <p>Trivia dinámica sobre la historia y curiosidades del Mundial</p>
+  <div class="badge-row">
+    <span class="badge">20 seg + robo de puntos</span>
+    <span class="badge">Puntos dobles si eres rápido</span>
+    <span class="badge">Podio final</span>
+  </div>
+</div>
+
+<div class="card">
+
+  <!-- SETUP -->
+  <div id="setup">
+    <label class="section-label">¿Cuántos jugadores van a competir?</label>
+    <div class="count-buttons" id="player-count-buttons"></div>
+
+    <label class="section-label">Datos de cada jugador</label>
+    <div class="player-setup-rows" id="player-setup-rows"></div>
+    <p class="setup-error" id="setup-error">Cada jugador necesita un nombre para poder empezar.</p>
+
+    <p class="bank-status" id="bank-status"></p>
+
+    <button class="primary-btn" id="start-btn">Iniciar partido</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="game">
+    <div class="field-wrap">
+      <svg id="field-svg" viewBox="0 0 700 240">
+        <rect x="10" y="10" width="680" height="220" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2" rx="8"></rect>
+        <line x1="350" y1="10" x2="350" y2="230" stroke="rgba(255,255,255,0.45)" stroke-width="2"></line>
+        <circle cx="350" cy="120" r="34" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2"></circle>
+        <circle cx="350" cy="120" r="3" fill="rgba(255,255,255,0.6)"></circle>
+        <rect x="10" y="60" width="55" height="120" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2"></rect>
+        <rect x="635" y="60" width="55" height="120" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2"></rect>
+        <rect x="668" y="85" width="10" height="70" fill="rgba(255,255,255,0.85)"></rect>
+      </svg>
+    </div>
+
+    <div class="top-row">
+      <span class="meta-info">Pregunta <span class="hl" id="round-num">1</span> / <span id="round-total">10</span></span>
+      <div class="timer-wrap">
+        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+        <span class="timer-num" id="timer-num">20</span>
+      </div>
+    </div>
+    <p class="double-window-note" id="double-window-note">Puntos dobles si respondes en los primeros 5 segundos</p>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+    <div id="penalty-banner-wrap"></div>
+
+    <div class="question-card" id="question-card">
+      <div class="turn-row">
+        <span class="turn-pill" id="turn-pill"></span>
+        <span class="streak-pill" id="streak-pill">Racha activa</span>
+      </div>
+      <p class="question-text" id="question-text"></p>
+      <div class="options" id="options"></div>
+      <div class="feedback-box" id="feedback"></div>
+      <button class="secondary-btn next-btn" id="next-btn">Siguiente pregunta</button>
+    </div>
+
+    <div class="scoreboard" id="scoreboard"></div>
+  </div>
+
+  <!-- FINAL -->
+  <div id="final">
+    <p class="final-eyebrow">Resultado final</p>
+    <p id="winner-text"></p>
+    <div class="podium-stage" id="podium-wrap"></div>
+    <div class="rest-ranking" id="rest-ranking"></div>
+    <button class="primary-btn" id="restart-btn" style="max-width:260px; margin-top:22px;">Jugar otra vez</button>
+  </div>
+
+</div>
+
+<footer>Diseñado para presentar en equipo</footer>
+
+<div class="full-overlay goal-overlay" id="goal-overlay">
+  <svg class="overlay-icon" viewBox="0 0 24 24" fill="none" stroke="#FCD116" stroke-width="1.5">
+    <circle cx="12" cy="12" r="9"></circle>
+    <path d="M12 3v3M12 18v3M3 12h3M18 12h3M6.3 6.3l2 2M15.7 15.7l2 2M6.3 17.7l2-2M15.7 8.3l2-2"></path>
+  </svg>
+  <div class="overlay-text" id="goal-text">GOL</div>
+  <div class="overlay-sub" id="goal-sub"></div>
+</div>
+
+<div class="full-overlay steal-overlay" id="steal-overlay">
+  <svg class="overlay-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+    <path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-0.5z"></path>
+  </svg>
+  <div class="overlay-text">ROBO DE PUNTOS</div>
+  <div class="overlay-sub" id="steal-sub">5 segundos para que cualquier otro jugador responda</div>
+</div>
+
+<script>
+const TEAMS = [
+  {name:"Argentina", flag:"🇦🇷"},
+  {name:"Brasil", flag:"🇧🇷"},
+  {name:"Francia", flag:"🇫🇷"},
+  {name:"España", flag:"🇪🇸"},
+  {name:"Alemania", flag:"🇩🇪"},
+  {name:"Inglaterra", flag:"🏴"},
+  {name:"Portugal", flag:"🇵🇹"},
+  {name:"Países Bajos", flag:"🇳🇱"},
+  {name:"Bélgica", flag:"🇧🇪"},
+  {name:"Croacia", flag:"🇭🇷"},
+  {name:"Uruguay", flag:"🇺🇾"},
+  {name:"Colombia", flag:"🇨🇴"},
+  {name:"México", flag:"🇲🇽"},
+  {name:"Estados Unidos", flag:"🇺🇸"},
+  {name:"Canadá", flag:"🇨🇦"},
+  {name:"Marruecos", flag:"🇲🇦"},
+  {name:"Japón", flag:"🇯🇵"},
+  {name:"Corea del Sur", flag:"🇰🇷"},
+  {name:"Italia", flag:"🇮🇹"},
+  {name:"Senegal", flag:"🇸🇳"}
+];
+
+const ALL_QUESTIONS = [
+  {q:"¿En qué país se jugó el primer Mundial de fútbol, en 1930?", o:["Uruguay","Brasil","Francia","Italia"], a:0},
+  {q:"¿Cada cuántos años se celebra el Mundial de fútbol?", o:["4 años","2 años","3 años","5 años"], a:0},
+  {q:"¿Qué tres países serán anfitriones del Mundial 2026?", o:["Estados Unidos, México y Canadá","Brasil, Argentina y Chile","España, Portugal y Marruecos","China, Japón y Corea"], a:0},
+  {q:"¿En qué continente se jugó el Mundial de Catar 2022?", o:["Asia","África","Europa","Oceanía"], a:0},
+  {q:"¿En qué país se jugó el Mundial de 2014?", o:["Brasil","Argentina","Chile","Colombia"], a:0},
+  {q:"¿Qué país organizó el primer Mundial jugado en África, en 2010?", o:["Sudáfrica","Marruecos","Egipto","Nigeria"], a:0},
+  {q:"¿En qué país se jugó el Mundial de 2018?", o:["Rusia","Polonia","Alemania","Ucrania"], a:0},
+  {q:"¿Cuál fue el primer Mundial transmitido por televisión a varios países?", o:["Suiza 1954","México 1970","Inglaterra 1966","Chile 1962"], a:0},
+  {q:"¿Qué país asiático fue sede del Mundial junto a Japón en 2002?", o:["Corea del Sur","China","Tailandia","Vietnam"], a:0},
+  {q:"¿Cómo se llama el trofeo que se entrega al equipo campeón del Mundial?", o:["Copa Mundial de la FIFA","Copa Intercontinental","Balón de Oro","Copa de Naciones"], a:0},
+  {q:"¿Cuántos jugadores de un mismo equipo están en la cancha al mismo tiempo?", o:["11","9","10","12"], a:0},
+  {q:"¿Cuánto dura un partido de fútbol en tiempo regular, sin alargues?", o:["90 minutos","60 minutos","120 minutos","45 minutos"], a:0},
+  {q:"¿Qué objeto usa el árbitro para señalar el inicio y el final de un partido?", o:["Un silbato","Una bandera","Una campana","Una bocina"], a:0},
+  {q:"¿De qué color es la tarjeta que indica una expulsión?", o:["Roja","Amarilla","Azul","Naranja"], a:0},
+  {q:"¿Cómo se le llama a un gol anotado con la cabeza?", o:["Cabezazo","Taquito","Caño","Sombrero"], a:0},
+  {q:"¿Cómo se llama el lanzamiento desde el punto blanco frente al arco?", o:["Penal","Saque de esquina","Tiro libre","Lateral"], a:0},
+  {q:"¿Qué selección ha ganado más títulos mundiales en la historia?", o:["Brasil","Argentina","Alemania","Italia"], a:0},
+  {q:"¿Qué jugador fue máximo goleador en el Mundial de Catar 2022, ganando la Bota de Oro?", o:["Kylian Mbappé","Lionel Messi","Cristiano Ronaldo","Neymar"], a:0},
+  {q:"¿Qué selección ganó el Mundial de Catar 2022?", o:["Argentina","Francia","Brasil","Croacia"], a:0},
+  {q:"¿Qué país ganó el Mundial de 2018 en Rusia?", o:["Francia","Croacia","Bélgica","Inglaterra"], a:0},
+  {q:"¿Qué selección sudamericana fue goleadora destacada en Brasil 2014 gracias a James Rodríguez?", o:["Colombia","Chile","Perú","Ecuador"], a:0},
+  {q:"¿Cómo se le llama al objeto redondo que se usa para jugar un partido de fútbol?", o:["Balón","Disco","Aro","Bate"], a:0},
+  {q:"¿Cómo se llama el lugar donde se juegan los partidos de fútbol?", o:["Estadio","Coliseo","Velódromo","Auditorio"], a:0},
+  {q:"¿Qué es una mascota oficial en el contexto de un Mundial?", o:["Un personaje símbolo del torneo","El nombre del estadio principal","El himno oficial","El uniforme del árbitro"], a:0},
+  {q:"¿Qué significa la sigla FIFA?", o:["Federación Internacional de Fútbol Asociado","Federación Internacional de Fútbol Amateur","Fundación Internacional de Fútbol Amistoso","Federación Iberoamericana de Fútbol Asociado"], a:0},
+  {q:"¿Cómo se le llama al grupo de aficionados que anima a un equipo durante el partido?", o:["Hinchada","Comitiva","Plantel","Cuerpo técnico"], a:0},
+  {q:"¿Qué fase del torneo se juega antes de llegar a octavos de final?", o:["Fase de grupos","Final","Semifinal","Repechaje"], a:0},
+  {q:"¿Qué se usa cuando el uniforme habitual de un equipo se parece mucho al del rival?", o:["Uniforme alternativo","Uniforme dorado","Uniforme de árbitro","Uniforme retro"], a:0},
+  {q:"¿Qué selección europea fue campeona del Mundial en 2006?", o:["Italia","Francia","Alemania","España"], a:0},
+  {q:"¿Qué selección fue campeona del Mundial en 2010, en Sudáfrica?", o:["España","Países Bajos","Alemania","Uruguay"], a:0},
+  {q:"¿Qué selección africana llegó por primera vez a semifinales de un Mundial en Catar 2022?", o:["Marruecos","Senegal","Nigeria","Ghana"], a:0},
+  {q:"¿Qué jugador portugués ha disputado cinco Mundiales con su selección?", o:["Cristiano Ronaldo","Pepe","Bruno Fernandes","João Félix"], a:0},
+  {q:"¿Qué país europeo quedó subcampeón del Mundial 2018?", o:["Croacia","Bélgica","Inglaterra","Dinamarca"], a:0},
+  {q:"¿Cuál de estos países NO ha sido nunca campeón del Mundial?", o:["Países Bajos","Brasil","Alemania","Francia"], a:0}
+];
+
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function buildShuffledQuestion(q){
+  const indices = [0,1,2,3];
+  const shuffledIdx = shuffle(indices);
+  const newOptions = shuffledIdx.map(i => q.o[i]);
+  const newAnswer = shuffledIdx.indexOf(q.a);
+  return {q: q.q, o: newOptions, a: newAnswer};
+}
+
+let players = [];
+let playerCount = 4;
+let selectedTeamIdx = {};
+let roundQuestions = [];
+let currentRound = 0;
+let currentPlayerIdx = 0;
+let answered = false;
+let ROUNDS = 10;
+const TIME_LIMIT = 20;
+const DOUBLE_WINDOW = 5;
+const STEAL_TIME_LIMIT = 5;
+const BASE_POINTS = 10;
+let timerInterval = null;
+let timeLeft = TIME_LIMIT;
+let usedIndices = new Set();
+let isPenaltyMode = false;
+let penaltyPlayers = [];
+let penaltyQuestionPool = [];
+let currentPenaltyTurn = 0;
+let penaltyRoundResults = [];
+let isStealMode = false;
+let stealEligiblePlayers = [];
+let currentQuestionShuffled = null;
+
+const colorHex = ['#003893','#CE1126','#1B7A3D','#FCD116','#7B3FA0','#0E8C9C'];
+
+function ballSVG(){
+  return '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="white" stroke="none"><circle cx="12" cy="12" r="10" fill="white" opacity="0.95"></circle><path d="M12 7l3 2-1 3h-4l-1-3 3-2z" fill="#161616"></path></svg>';
+}
+
+function updateBankStatus(){
+  const remaining = ALL_QUESTIONS.length - usedIndices.size;
+  const el = document.getElementById('bank-status');
+  const icon = '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M8 8h.01M16 16h.01M16 8l-8 8"></path></svg>';
+  if(usedIndices.size === 0){
+    el.innerHTML = icon + ' Banco de preguntas: ' + ALL_QUESTIONS.length + ' disponibles.';
+  } else {
+    el.innerHTML = icon + ' Quedan ' + remaining + ' de ' + ALL_QUESTIONS.length + ' preguntas sin usar.';
+  }
+}
+
+function pickRoundQuestions(totalNeeded){
+  let availableIdx = ALL_QUESTIONS.map((_, i) => i).filter(i => !usedIndices.has(i));
+  if(availableIdx.length < totalNeeded){
+    usedIndices.clear();
+    availableIdx = ALL_QUESTIONS.map((_, i) => i);
+  }
+  const chosenIdx = shuffle(availableIdx).slice(0, totalNeeded);
+  chosenIdx.forEach(i => usedIndices.add(i));
+  return chosenIdx.map(i => buildShuffledQuestion(ALL_QUESTIONS[i]));
+}
+
+function renderPlayerCountButtons(){
+  const wrap = document.getElementById('player-count-buttons');
+  wrap.innerHTML = '';
+  [2,3,4,5,6].forEach(n => {
+    const b = document.createElement('button');
+    b.className = 'count-btn' + (n===playerCount ? ' active' : '');
+    b.textContent = n + ' jugadores';
+    b.onclick = () => { playerCount = n; renderPlayerCountButtons(); renderPlayerSetupRows(); };
+    wrap.appendChild(b);
+  });
+}
+
+function renderFlagGrid(playerIdx){
+  const grid = document.createElement('div');
+  grid.className = 'flag-grid';
+  grid.id = 'flag-grid-' + playerIdx;
+  TEAMS.forEach((t, ti) => {
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.className = 'flag-option' + (selectedTeamIdx[playerIdx] === ti ? ' selected' : '');
+    opt.innerHTML = '<span class="flag-emoji">'+t.flag+'</span><span class="flag-name">'+t.name+'</span>';
+    opt.onclick = () => {
+      selectedTeamIdx[playerIdx] = ti;
+      Array.from(grid.children).forEach(c => c.classList.remove('selected'));
+      opt.classList.add('selected');
+    };
+    grid.appendChild(opt);
+  });
+  return grid;
+}
+
+function renderPlayerSetupRows(){
+  const wrap = document.getElementById('player-setup-rows');
+  wrap.innerHTML = '';
+  for(let i=0;i<playerCount;i++){
+    if(selectedTeamIdx[i] === undefined){ selectedTeamIdx[i] = i % TEAMS.length; }
+    const card = document.createElement('div');
+    card.className = 'player-setup-card';
+
+    const top = document.createElement('div');
+    top.className = 'player-setup-top';
+    const badge = document.createElement('span');
+    badge.className = 'player-num-badge';
+    badge.style.background = colorHex[i];
+    badge.textContent = (i+1);
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Nombre del jugador ' + (i+1) + ' (obligatorio)';
+    input.id = 'player-input-' + i;
+    top.appendChild(badge);
+    top.appendChild(input);
+
+    const teamLabel = document.createElement('p');
+    teamLabel.className = 'team-select-label';
+    teamLabel.textContent = 'Selección del Mundial';
+
+    card.appendChild(top);
+    card.appendChild(teamLabel);
+    card.appendChild(renderFlagGrid(i));
+    wrap.appendChild(card);
+  }
+}
+
+function getFieldX(progress){ return 65 + progress * (630-65); }
+
+function renderField(){
+  const svg = document.getElementById('field-svg');
+  Array.from(svg.querySelectorAll('.player-marker')).forEach(el => el.remove());
+  const maxPossible = BASE_POINTS*2*ROUNDS;
+  players.forEach((p, i) => {
+    const progress = Math.min(p.score / maxPossible, 1);
+    const x = getFieldX(progress);
+    const y = 40 + i * ((240-80)/Math.max(players.length-1,1));
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','player-marker');
+    g.style.transition = 'transform 0.5s ease';
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', 12);
+    circle.setAttribute('fill', colorHex[i % colorHex.length]);
+    circle.setAttribute('stroke', 'white');
+    circle.setAttribute('stroke-width', '2');
+    g.appendChild(circle);
+    const initial = document.createElementNS('http://www.w3.org/2000/svg','text');
+    initial.setAttribute('x', x); initial.setAttribute('y', y+4);
+    initial.setAttribute('text-anchor','middle');
+    initial.setAttribute('font-size','11');
+    initial.setAttribute('font-weight','800');
+    initial.setAttribute('fill','white');
+    initial.textContent = (p.name || '?').charAt(0).toUpperCase();
+    g.appendChild(initial);
+    svg.appendChild(g);
+  });
+}
+
+function renderScoreboard(targetId, playersList, highlightIdx, stealTargets){
+  const wrap = document.getElementById(targetId);
+  wrap.innerHTML = '';
+  playersList.forEach((p, i) => {
+    const row = document.createElement('div');
+    let cls = 'score-row';
+    if(i === highlightIdx) cls += ' active';
+    if(stealTargets && stealTargets.includes(i)) cls += ' steal-target';
+    row.className = cls;
+    const left = document.createElement('div');
+    left.className = 'score-left';
+    const flag = document.createElement('span');
+    flag.className = 'flag-chip';
+    flag.textContent = p.team.flag;
+    const name = document.createElement('span');
+    name.textContent = p.name;
+    left.appendChild(flag); left.appendChild(name);
+    const score = document.createElement('span');
+    score.className = 'score-pts';
+    score.textContent = p.score + ' pts';
+    row.appendChild(left); row.appendChild(score);
+    wrap.appendChild(row);
+  });
+}
+
+function startTimer(limit, onExpire, onTickExtra){
+  clearInterval(timerInterval);
+  timeLeft = limit;
+  const timerNumEl = document.getElementById('timer-num');
+  timerNumEl.textContent = timeLeft;
+  document.getElementById('timer-fill').style.width = '100%';
+  document.getElementById('timer-fill').style.background = '#1B7A3D';
+  const note = document.getElementById('double-window-note');
+  note.classList.remove('faded');
+  timerInterval = setInterval(() => {
+    timeLeft -= 1;
+    timerNumEl.textContent = timeLeft;
+    const pct = Math.max(0, (timeLeft/limit)*100);
+    document.getElementById('timer-fill').style.width = pct + '%';
+    if(timeLeft <= Math.ceil(limit*0.2)){ document.getElementById('timer-fill').style.background = '#CE1126'; }
+    else if(timeLeft <= Math.ceil(limit*0.5)){ document.getElementById('timer-fill').style.background = '#FCD116'; }
+    if(limit === TIME_LIMIT && TIME_LIMIT - timeLeft >= DOUBLE_WINDOW){ note.classList.add('faded'); }
+    if(onTickExtra) onTickExtra();
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      onExpire();
+    }
+  }, 1000);
+}
+
+function loadQuestion(){
+  answered = false;
+  isStealMode = false;
+  document.getElementById('question-card').classList.remove('steal-active');
+  document.getElementById('turn-pill').classList.remove('steal');
+  document.getElementById('timer-num').classList.remove('steal-mode');
+  currentQuestionShuffled = roundQuestions[currentRound];
+  const q = currentQuestionShuffled;
+  document.getElementById('round-num').textContent = currentRound+1;
+  document.getElementById('round-total').textContent = roundQuestions.length;
+  const player = players[currentPlayerIdx];
+  document.getElementById('turn-pill').textContent = player.team.flag + ' Turno de ' + player.name;
+  const streakPill = document.getElementById('streak-pill');
+  if(player.streak >= 2){
+    streakPill.classList.add('show');
+    streakPill.textContent = 'Racha activa x' + player.streak + ': próximo acierto +bonus';
+  } else {
+    streakPill.classList.remove('show');
+  }
+  document.getElementById('question-text').textContent = q.q;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback-box';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('progress-fill').style.width = (currentRound / roundQuestions.length * 100) + '%';
+  renderOptions(q, selectAnswer);
+  renderScoreboard('scoreboard', players, currentPlayerIdx);
+  startTimer(TIME_LIMIT, () => handleTimeout());
+}
+
+function renderOptions(q, clickHandler){
+  const letters = ['A','B','C','D'];
+  const optWrap = document.getElementById('options');
+  optWrap.innerHTML = '';
+  q.o.forEach((opt, idx) => {
+    const b = document.createElement('button');
+    b.className = 'option-btn';
+    const letterSpan = document.createElement('span');
+    letterSpan.className = 'option-letter';
+    letterSpan.textContent = letters[idx];
+    const textSpan = document.createElement('span');
+    textSpan.textContent = opt;
+    b.appendChild(letterSpan);
+    b.appendChild(textSpan);
+    b.onclick = () => clickHandler(idx, b);
+    optWrap.appendChild(b);
+  });
+}
+
+function handleTimeout(){
+  if(answered) return;
+  if(isPenaltyMode){
+    answered = true;
+    const q = currentQuestionShuffled;
+    const buttons = Array.from(document.getElementById('options').children);
+    buttons.forEach(b => b.disabled = true);
+    buttons[q.a].classList.add('correct');
+    const fb = document.getElementById('feedback');
+    fb.textContent = 'Se acabó el tiempo. La respuesta correcta era: ' + q.o[q.a];
+    fb.className = 'feedback-box timeout';
+    handlePenaltyResult(false);
+    return;
+  }
+  if(!isStealMode){
+    startStealRound();
+  } else {
+    answered = true;
+    const q = currentQuestionShuffled;
+    const buttons = Array.from(document.getElementById('options').children);
+    buttons.forEach(b => b.disabled = true);
+    buttons[q.a].classList.add('correct');
+    const fb = document.getElementById('feedback');
+    fb.textContent = 'Nadie robó los puntos a tiempo. La respuesta correcta era: ' + q.o[q.a];
+    fb.className = 'feedback-box timeout';
+    players[currentPlayerIdx].streak = 0;
+    document.getElementById('streak-pill').classList.remove('show');
+    document.getElementById('next-btn').style.display = 'inline-flex';
+  }
+}
+
+function startStealRound(){
+  isStealMode = true;
+  answered = false;
+  players[currentPlayerIdx].streak = 0;
+  document.getElementById('streak-pill').classList.remove('show');
+
+  const overlay = document.getElementById('steal-overlay');
+  overlay.classList.add('show');
+  setTimeout(() => { overlay.classList.remove('show'); }, 1200);
+
+  document.getElementById('question-card').classList.add('steal-active');
+  document.getElementById('turn-pill').classList.add('steal');
+  document.getElementById('turn-pill').textContent = 'Robo de puntos: cualquiera puede responder';
+  document.getElementById('timer-num').classList.add('steal-mode');
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback-box';
+
+  const buttons = Array.from(document.getElementById('options').children);
+  buttons.forEach(b => { b.disabled = false; b.classList.remove('correct','incorrect'); });
+
+  stealEligiblePlayers = players.map((p,i) => i).filter(i => i !== currentPlayerIdx);
+  renderScoreboard('scoreboard', players, currentPlayerIdx, stealEligiblePlayers);
+
+  startTimer(STEAL_TIME_LIMIT, () => handleTimeout());
+}
+
+function showGoalCelebration(playerName, callback){
+  const overlay = document.getElementById('goal-overlay');
+  document.getElementById('goal-sub').textContent = playerName + ' llega a la meta y se corona campeón';
+  overlay.classList.add('show');
+  setTimeout(() => { overlay.classList.remove('show'); callback(); }, 1700);
+}
+
+function selectAnswer(idx, btnEl){
+  if(answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+  const elapsed = TIME_LIMIT - timeLeft;
+  const wasFast = !isStealMode && elapsed <= DOUBLE_WINDOW;
+  const q = currentQuestionShuffled;
+  const buttons = Array.from(document.getElementById('options').children);
+  buttons.forEach(b => b.disabled = true);
+  const fb = document.getElementById('feedback');
+
+  let actingPlayerIdx = currentPlayerIdx;
+  if(isStealMode){
+    // En modo robo, asumimos que el jugador que "robó" se identifica por seleccionar su fila antes,
+    // pero como es una sola pantalla compartida, preguntamos verbalmente: se asigna el punto al ganador del robo
+    // mediante el siguiente prompt visual (manejado abajo).
+  }
+
+  if(isStealMode){
+    promptStealWinner(idx, q, buttons, btnEl);
+    return;
+  }
+
+  const player = players[currentPlayerIdx];
+  let scored = false;
+  if(idx === q.a){
+    scored = true;
+    player.streak = (player.streak || 0) + 1;
+    let gained = wasFast ? BASE_POINTS * 2 : BASE_POINTS;
+    let bonusMsg = wasFast ? ' Respuesta rápida: puntos dobles.' : '';
+    if(player.streak >= 3){
+      gained += 5;
+      bonusMsg += ' Racha de ' + player.streak + ': +5 de bono.';
+    }
+    player.score += gained;
+    btnEl.classList.add('correct');
+    fb.innerHTML = ballSVG() + ' Correcto. ' + player.name + ' suma ' + gained + ' puntos.' + bonusMsg;
+    fb.className = 'feedback-box success';
+  } else {
+    player.streak = 0;
+    btnEl.classList.add('incorrect');
+    buttons[q.a].classList.add('correct');
+    fb.textContent = 'Incorrecto. La respuesta correcta era: ' + q.o[q.a];
+    fb.className = 'feedback-box error';
+  }
+
+  renderField();
+  renderScoreboard('scoreboard', players, currentPlayerIdx);
+
+  if(isPenaltyMode){ handlePenaltyResult(scored); return; }
+
+  document.getElementById('next-btn').style.display = 'inline-flex';
+}
+
+function promptStealWinner(idx, q, buttons, btnEl){
+  // Muestra quién puede haber robado: como es pantalla compartida, se le pide al presentador
+  // marcar qué jugador respondió primero usando los chips de la tabla de puntajes.
+  const fb = document.getElementById('feedback');
+  const isCorrect = idx === q.a;
+  if(isCorrect){
+    btnEl.classList.add('correct');
+  } else {
+    btnEl.classList.add('incorrect');
+    buttons[q.a].classList.add('correct');
+  }
+
+  const scoreboardWrap = document.getElementById('scoreboard');
+  scoreboardWrap.innerHTML = '';
+  fb.textContent = isCorrect
+    ? 'Respuesta correcta. Toca el nombre de quien la dijo primero para darle los puntos:'
+    : 'Respuesta incorrecta. La correcta era: ' + q.o[q.a] + '. Nadie roba esta vez.';
+  fb.className = isCorrect ? 'feedback-box success' : 'feedback-box error';
+
+  players.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'score-row' + (i === currentPlayerIdx ? '' : '');
+    const left = document.createElement('div');
+    left.className = 'score-left';
+    const flag = document.createElement('span');
+    flag.className = 'flag-chip';
+    flag.textContent = p.team.flag;
+    const name = document.createElement('span');
+    name.textContent = p.name;
+    left.appendChild(flag); left.appendChild(name);
+    const score = document.createElement('span');
+    score.className = 'score-pts';
+    score.textContent = p.score + ' pts';
+    row.appendChild(left); row.appendChild(score);
+
+    if(isCorrect && i !== currentPlayerIdx){
+      row.style.cursor = 'pointer';
+      row.style.borderColor = 'var(--rojo)';
+      row.onclick = () => {
+        p.score += BASE_POINTS;
+        p.streak = 0;
+        renderField();
+        renderScoreboard('scoreboard', players, currentPlayerIdx);
+        fb.textContent = p.name + ' robó ' + BASE_POINTS + ' puntos.';
+        document.getElementById('next-btn').style.display = 'inline-flex';
+      };
+    }
+    scoreboardWrap.appendChild(row);
+  });
+
+  if(!isCorrect){
+    document.getElementById('next-btn').style.display = 'inline-flex';
+  }
+}
+
+function nextQuestion(){
+  currentPlayerIdx = (currentPlayerIdx + 1) % players.length;
+  currentRound += 1;
+  if(currentRound >= roundQuestions.length){
+    checkForTieOrFinish();
+  } else {
+    loadQuestion();
+  }
+}
+
+function checkForTieOrFinish(){
+  const maxScore = Math.max(...players.map(p => p.score));
+  const tied = players.filter(p => p.score === maxScore);
+  if(tied.length > 1){
+    startPenaltyMode(tied);
+  } else {
+    showFinal(false);
+  }
+}
+
+function startPenaltyMode(tiedPlayers){
+  isPenaltyMode = true;
+  penaltyPlayers = tiedPlayers.map(p => ({player: p}));
+  let pool = ALL_QUESTIONS.map((qq,i)=>i).filter(i => !usedIndices.has(i));
+  if(pool.length < 12){
+    usedIndices.clear();
+    pool = ALL_QUESTIONS.map((qq,i)=>i);
+  }
+  penaltyQuestionPool = shuffle(pool);
+  currentPenaltyTurn = 0;
+  penaltyRoundResults = [];
+
+  const banner = document.createElement('div');
+  banner.className = 'penalty-banner';
+  banner.innerHTML = '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="9"></circle></svg> Empate en el primer lugar. Vamos a penales entre ' + tiedPlayers.map(p=>p.name).join(' y ');
+  document.getElementById('penalty-banner-wrap').innerHTML = '';
+  document.getElementById('penalty-banner-wrap').appendChild(banner);
+
+  document.getElementById('round-total').textContent = 'penales';
+  loadPenaltyQuestion();
+}
+
+function loadPenaltyQuestion(){
+  answered = false;
+  isStealMode = false;
+  document.getElementById('question-card').classList.remove('steal-active');
+  document.getElementById('timer-num').classList.remove('steal-mode');
+  const activePlayer = penaltyPlayers[currentPenaltyTurn % penaltyPlayers.length].player;
+  let qIdx = penaltyQuestionPool.shift();
+  if(qIdx === undefined){
+    usedIndices.clear();
+    penaltyQuestionPool = shuffle(ALL_QUESTIONS.map((qq,i)=>i));
+    qIdx = penaltyQuestionPool.shift();
+  }
+  usedIndices.add(qIdx);
+  currentQuestionShuffled = buildShuffledQuestion(ALL_QUESTIONS[qIdx]);
+  const q = currentQuestionShuffled;
+  document.getElementById('round-num').textContent = 'P';
+  document.getElementById('turn-pill').textContent = activePlayer.team.flag + ' Penal de ' + activePlayer.name;
+  document.getElementById('turn-pill').classList.remove('steal');
+  document.getElementById('streak-pill').classList.remove('show');
+  document.getElementById('question-text').textContent = q.q;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback-box';
+  document.getElementById('next-btn').style.display = 'none';
+  currentPlayerIdx = players.indexOf(activePlayer);
+
+  renderOptions(q, selectAnswerPenalty);
+  renderScoreboard('scoreboard', players, currentPlayerIdx);
+  startTimer(TIME_LIMIT, () => handleTimeout());
+}
+
+function selectAnswerPenalty(idx, btnEl){
+  if(answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+  const q = currentQuestionShuffled;
+  const buttons = Array.from(document.getElementById('options').children);
+  buttons.forEach(b => b.disabled = true);
+  const fb = document.getElementById('feedback');
+  let scored = false;
+  if(idx === q.a){
+    scored = true;
+    btnEl.classList.add('correct');
+    fb.textContent = 'Correcto.';
+    fb.className = 'feedback-box success';
+  } else {
+    btnEl.classList.add('incorrect');
+    buttons[q.a].classList.add('correct');
+    fb.textContent = 'Incorrecto. La respuesta correcta era: ' + q.o[q.a];
+    fb.className = 'feedback-box error';
+  }
+  handlePenaltyResult(scored);
+}
+
+function handlePenaltyResult(scored){
+  penaltyRoundResults.push(scored);
+  currentPenaltyTurn += 1;
+
+  if(currentPenaltyTurn % penaltyPlayers.length === 0){
+    const results = penaltyRoundResults.slice(-penaltyPlayers.length);
+    const correctCount = results.filter(r => r).length;
+    if(correctCount === 1){
+      const winnerIdx = results.indexOf(true);
+      const winner = penaltyPlayers[winnerIdx].player;
+      isPenaltyMode = false;
+      winner.score += 1;
+      setTimeout(() => { showGoalCelebration(winner.name, () => { showFinal(true); }); }, 600);
+      return;
+    }
+  }
+  setTimeout(() => { loadPenaltyQuestion(); }, 1400);
+}
+
+function renderPodiumAndRest(sorted){
+  const podiumWrap = document.getElementById('podium-wrap');
+  const restWrap = document.getElementById('rest-ranking');
+  podiumWrap.innerHTML = '';
+  restWrap.innerHTML = '';
+
+  if(players.length >= 3){
+    [0,1,2].forEach(rankIdx => {
+      const p = sorted[rankIdx];
+      if(!p) return;
+      const col = document.createElement('div');
+      col.className = 'podium-col podium-' + (rankIdx+1);
+      const medal = document.createElement('div');
+      medal.className = 'podium-medal';
+      medal.textContent = (rankIdx+1);
+      const flag = document.createElement('div');
+      flag.className = 'podium-flag';
+      flag.textContent = p.team.flag;
+      const name = document.createElement('div');
+      name.className = 'podium-name';
+      name.textContent = p.name;
+      const pts = document.createElement('div');
+      pts.className = 'podium-pts';
+      pts.textContent = p.score + ' pts';
+      const block = document.createElement('div');
+      block.className = 'podium-block';
+      col.appendChild(medal);
+      col.appendChild(flag);
+      col.appendChild(name);
+      col.appendChild(pts);
+      col.appendChild(block);
+      podiumWrap.appendChild(col);
+    });
+    sorted.slice(3).forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'score-row';
+      const left = document.createElement('div');
+      left.className = 'score-left';
+      const rank = document.createElement('span');
+      rank.className = 'rank-badge';
+      rank.textContent = (i+4);
+      const flag = document.createElement('span');
+      flag.className = 'flag-chip';
+      flag.textContent = p.team.flag;
+      const name = document.createElement('span');
+      name.textContent = p.name;
+      left.appendChild(rank); left.appendChild(flag); left.appendChild(name);
+      const score = document.createElement('span');
+      score.className = 'score-pts';
+      score.textContent = p.score + ' pts';
+      row.appendChild(left); row.appendChild(score);
+      restWrap.appendChild(row);
+    });
+  } else {
+    podiumWrap.style.display = 'none';
+    sorted.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'score-row';
+      const left = document.createElement('div');
+      left.className = 'score-left';
+      const rank = document.createElement('span');
+      rank.className = 'rank-badge';
+      rank.style.background = i===0 ? '#FCD116' : '#C7C2AD';
+      rank.style.color = i===0 ? '#161616' : 'white';
+      rank.textContent = (i+1);
+      const flag = document.createElement('span');
+      flag.className = 'flag-chip';
+      flag.textContent = p.team.flag;
+      const name = document.createElement('span');
+      name.textContent = p.name;
+      left.appendChild(rank); left.appendChild(flag); left.appendChild(name);
+      const score = document.createElement('span');
+      score.className = 'score-pts';
+      score.textContent = p.score + ' pts';
+      row.appendChild(left); row.appendChild(score);
+      restWrap.appendChild(row);
+    });
+  }
+}
+
+function showFinal(penaltyDecided){
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('final').style.display = 'flex';
+  const sorted = [...players].sort((a,b) => b.score - a.score);
+  const winner = sorted[0];
+  const tie = !penaltyDecided && sorted.length>1 && sorted[1].score === winner.score;
+  document.getElementById('winner-text').textContent = tie ? 'Empate en el primer lugar' : winner.team.flag + ' ' + winner.name + ' es el campeón del partido';
+  document.getElementById('podium-wrap').style.display = 'flex';
+  renderPodiumAndRest(sorted);
+}
+
+function validateAndStart(){
+  let valid = true;
+  for(let i=0;i<playerCount;i++){
+    const input = document.getElementById('player-input-'+i);
+    if(!input.value.trim()){
+      input.classList.add('input-error');
+      valid = false;
+    } else {
+      input.classList.remove('input-error');
+    }
+  }
+  document.getElementById('setup-error').classList.toggle('show', !valid);
+  return valid;
+}
+
+document.getElementById('start-btn').onclick = () => {
+  if(!validateAndStart()) return;
+  players = [];
+  for(let i=0;i<playerCount;i++){
+    const name = document.getElementById('player-input-'+i).value.trim();
+    const teamIdx = selectedTeamIdx[i] !== undefined ? selectedTeamIdx[i] : (i % TEAMS.length);
+    players.push({name: name, score: 0, colorIdx: i, streak: 0, team: TEAMS[teamIdx]});
+  }
+  // Asegura que todos los jugadores tengan el mismo número de turnos:
+  // se eligen N rondas que sean múltiplo exacto de la cantidad de jugadores, cercano a 10.
+  const turnsPerPlayer = Math.max(2, Math.round(10 / playerCount));
+  ROUNDS = turnsPerPlayer * playerCount;
+
+  roundQuestions = pickRoundQuestions(ROUNDS);
+  document.getElementById('round-total').textContent = roundQuestions.length;
+  currentRound = 0;
+  currentPlayerIdx = 0;
+  isPenaltyMode = false;
+  document.getElementById('penalty-banner-wrap').innerHTML = '';
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('final').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  renderField();
+  loadQuestion();
+};
+
+document.getElementById('next-btn').onclick = nextQuestion;
+document.getElementById('restart-btn').onclick = () => {
+  document.getElementById('final').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+  updateBankStatus();
+};
+
+renderPlayerCountButtons();
+renderPlayerSetupRows();
+updateBankStatus();
+</script>
+
+</body>
+</html>
